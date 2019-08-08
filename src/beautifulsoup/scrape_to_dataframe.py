@@ -1,41 +1,73 @@
-#Import the necessary libraries
+#
+# Import the necessary libraries
+#
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
 url = "https://beta.charitycommission.gov.uk/charity-details/"
 
-#Create some empty lists first
+#
+# Create empty lists to hold ids and amounts
+#
 idlist = []
 amountlist = []
-#Create a list of charity IDs:
+#
+# Set up the list of charity IDs of interest
+#
 charityids = ["213890", "213891", "213892", "213894"]
-#Loop through them:
-for eachid in charityids:
-  response = requests.get(url, params={'regId': eachid})
-  #Now drill down into the page ('response'), and turn it into a more easily scrapable object
-  soup = BeautifulSoup(response.content, 'lxml')
-  #Print the results of drilling down into that, specifying a particular attribute we want to grab
-  print(soup.find("p", attrs={"class": "pcg-charity-details__amount"}))
-  #Then showing the text only (no tags) using .text
-  print(soup.find("p", attrs={"class": "pcg-charity-details__amount"}).text)
-  #Store as charityamount
-  charityamount = soup.find("p", attrs={"class": "pcg-charity-details__amount"}).text
-  #Append to list
-  amountlist.append(charityamount)
-  #Append the id, too - although we don't really need to do this
-  idlist.append(eachid)
 
-#Once that loop has finished we have two lists
+#
+# Loop through list, processing each id to retrieve the amount
+#
+for id in charityids:
+    response = requests.get(url, params={"regId": id})
+    #
+    # Extract the content from the response
+    # and build a searchable "HTML soup".
+    #
+    soup = BeautifulSoup(response.content, "lxml")
+    #
+    # The relevant paragraph has a class of "pcg-charity-details__amount"
+    # so select it using the soup's find method.
+    #
+    print(soup.find("p", attrs={"class": "pcg-charity-details__amount"}))
+    #
+    # The paragraph's text attribute is the content, no markup
+    #
+    print(soup.find("p", attrs={"class": "pcg-charity-details__amount"}).text)
+    #
+    # Save the value in a variable
+    #
+    charityamount = soup.find("p", attrs={"class": "pcg-charity-details__amount"}).text
+    #
+    # Append the id and amount to their resp[ective lists
+    #
+    idlist.append(id)
+    amountlist.append(charityamount)
+
+#
+# Print the accumulated lists
+#
 print(amountlist)
 print(idlist)
 
-#Create a dictionary with those lists
-d = {'charityid': idlist, 'amount': amountlist}
-#Convert to a pandas data frame
+#
+# Create a dictionary representing each column of
+# a dataframe as a named list of values.
+#
+d = {"charityid": idlist, "amount": amountlist}
+
+#
+# Build a pandas DataFrame from that dictionary and show it
+# - see http://queirozf.com/entries/pandas-dataframe-by-example
+#
 df = pd.DataFrame(data=d)
-#Show it
 print(df)
 
-#Export as a CSV file using the .to_csv function https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html
-df.to_csv('allscrapeddata.csv')
+#
+# Export as a CSV file using the dataframe's to_csv method
+# - see http://bit.ly/holdenweb_datraframe_to_csv
+# Yes, I'm dyslexic. Sue me :P
+#
+df.to_csv("allscrapeddata.csv")
